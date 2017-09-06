@@ -12,8 +12,8 @@
 
 #include <tuple>
 
-#include "render/Scene.h"
-#include "gpu/Pipeline.h"
+#include "../../render/src/render/Scene.h"
+#include "../../gpu/src/gpu/Pipeline.h"
 #include "AnimNode.h"
 #include "AnimSkeleton.h"
 

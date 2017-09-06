@@ -11,7 +11,8 @@
 #ifndef hifi_model_TextureMap_h
 #define hifi_model_TextureMap_h
 
-#include "gpu/Texture.h"
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Texture.h"
 
 #include "Transform.h"
 

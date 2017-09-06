@@ -12,10 +12,10 @@
 #ifndef hifi_DeferredFrameTransform_h
 #define hifi_DeferredFrameTransform_h
 
-#include <gpu/Resource.h>
-
-#include <render/Forward.h>
-#include <render/DrawTask.h>
+//CLIMAX_MERGE_START
+#include "../../render/src/render/Forward.h"
+#include "../../render/src/render/DrawTask.h"
+//#include <gpu/Resource.h>
 
 // DeferredFrameTransform is  a helper class gathering in one place the needed camera transform
 // and frame resolution needed for all the deferred rendering passes taking advantage of the Deferred buffers

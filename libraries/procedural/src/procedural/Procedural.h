@@ -18,11 +18,14 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
 
-#include <gpu/Shader.h>
-#include <gpu/Pipeline.h>
-#include <gpu/Batch.h>
-#include <model-networking/ShaderCache.h>
-#include <model-networking/TextureCache.h>
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Shader.h"
+#include "../../../gpu/src/gpu/Pipeline.h"
+#include "../../../gpu/src/gpu/Batch.h"
+
+#include "../../../model-networking/src/model-networking/ShaderCache.h"
+#include "../../../model-networking/src/model-networking/TextureCache.h"
+//CLIMAX_MERGE_END
 
 using UniformLambdas = std::list<std::function<void(gpu::Batch& batch)>>;
 const size_t MAX_PROCEDURAL_TEXTURE_CHANNELS{ 4 };

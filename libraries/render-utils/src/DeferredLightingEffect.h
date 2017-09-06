@@ -16,13 +16,13 @@
 
 #include <DependencyManager.h>
 #include <NumericalConstants.h>
+//CLIMAX_MERGE_START
+#include "../../model/src/model/Light.h"
+#include "../../model/src/model/Geometry.h"
+#include "../../procedural/src/procedural/ProceduralSkybox.h"
+#include "../../render/src/render/CullTask.h"
+//CLIMAX_MERGE_END
 
-#include "model/Light.h"
-#include "model/Geometry.h"
-
-#include <procedural/ProceduralSkybox.h>
-
-#include <render/CullTask.h>
 
 #include "DeferredFrameTransform.h"
 #include "DeferredFramebuffer.h"

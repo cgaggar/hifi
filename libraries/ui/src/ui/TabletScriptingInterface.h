@@ -148,7 +148,7 @@ public:
      * @function TabletProxy#getItemAtPoint
      * @param point {glm::vec2&} point (x, y)
      */
-    Q_INVOKABLE QQuickItem * getItemAtPoint(const glm::vec2& point);
+    //Q_INVOKABLE QQuickItem * getItemAtPoint(const glm::vec2& point);
 
     /**jsdoc
      * Creates a new button, adds it to this and returns it.

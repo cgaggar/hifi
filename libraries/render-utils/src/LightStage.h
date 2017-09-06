@@ -15,13 +15,13 @@
 #include <set>
 #include <unordered_map>
 
-#include <gpu/Framebuffer.h>
 
-#include <model/Light.h>
-
-#include <render/IndexedContainer.h>
-#include <render/Stage.h>
-#include <render/Engine.h>
+//CLIMAX_MERGE_START
+#include "../../render/src/render/IndexedContainer.h"
+#include "../../render/src/render/Stage.h"
+#include "../../render/src/render/Engine.h"
+#include "../../gpu/src/gpu/Framebuffer.h"
+#include "../../model/src/model/Light.h"
 
 class ViewFrustum;
 

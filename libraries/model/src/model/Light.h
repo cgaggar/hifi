@@ -16,8 +16,9 @@
 
 #include <glm/glm.hpp>
 #include "Transform.h"
-#include "gpu/Resource.h"
-#include "gpu/Texture.h"
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Resource.h"
+#include "../../../gpu/src/gpu/Texture.h"
 
 namespace model {
 typedef gpu::BufferView UniformBufferView;

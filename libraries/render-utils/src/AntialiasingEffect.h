@@ -14,7 +14,7 @@
 
 #include <DependencyManager.h>
 
-#include "render/DrawTask.h"
+#include "../../render/src/render/DrawTask.h"
 
 class AntiAliasingConfig : public render::Job::Config {
     Q_OBJECT

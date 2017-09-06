@@ -14,7 +14,8 @@
 
 #include <QVariant>
 
-#include <gpu/Texture.h>
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Texture.h"
 
 class QByteArray;
 class QImage;
