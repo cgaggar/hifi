@@ -13,12 +13,14 @@
 
 #include <PerfStat.h>
 #include <PathUtils.h>
-#include <gpu/Batch.h>
-#include <gpu/Context.h>
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Batch.h"
+#include "../../../gpu/src/gpu/Context.h"
+//CLIMAX_MERGE_END
 #include <DeferredLightingEffect.h>
 #include <NumericalConstants.h>
 #include <ui-plugins/PluginContainer.h>
-#include <UserActivityLogger.h>
+//#include <UserActivityLogger.h>
 #include <OffscreenUi.h>
 
 

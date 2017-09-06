@@ -14,7 +14,9 @@
 
 #include <DependencyManager.h>
 
-#include "render/DrawTask.h"
+//CLIMAX_MERGE_START
+#include "../../render/src/render/DrawTask.h"
+
 #include "DeferredFrameTransform.h"
 #include "DeferredFramebuffer.h"
 #include "SurfaceGeometryPass.h"

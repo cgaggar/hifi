@@ -12,8 +12,10 @@
 #define hifi_render_utils_LightClusters_h
 
 #include <ViewFrustum.h>
-#include <gpu/Buffer.h>
-#include <render/Engine.h>
+//CLIMAX_MERGE_START
+#include "../../gpu/src/gpu/Buffer.h"
+#include "../../render/src/render/Engine.h"
+
 #include "LightStage.h"
 #include "DeferredFrameTransform.h"
 #include "LightingModel.h"

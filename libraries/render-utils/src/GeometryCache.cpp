@@ -26,10 +26,10 @@
 #include "RenderUtilsLogging.h"
 #include "StencilMaskPass.h"
 
-#include "gpu/StandardShaderLib.h"
+#include "../../gpu/src/gpu/StandardShaderLib.h"
 
-#include "model/TextureMap.h"
-#include "render/Args.h"
+#include "../../model/src/model/TextureMap.h"
+#include "../../render/src/render/Args.h"
 
 #include "standardTransformPNTC_vert.h"
 #include "standardDrawTexture_frag.h"

@@ -11,7 +11,8 @@
 #ifndef hifi_model_Stage_h
 #define hifi_model_Stage_h
 
-#include <gpu/Pipeline.h>
+//CLIMAX_MERGE_START
+#include "../../gpu/src/gpu/Pipeline.h"
 
 #include "Light.h"
 #include "Skybox.h"

@@ -11,10 +11,11 @@
 #include <controllers/Pose.h>
 #include <ui-plugins/PluginContainer.h>
 #include <gl/GLWidget.h>
-#include <gpu/Frame.h>
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Frame.h"
+#include "../../../gpu/src/gpu/Context.h"
+//CLIMAX_MERGE_END
 #include <CursorManager.h>
-
-#include <gpu/Context.h>
 
 #ifdef ANDROID
 #include <QtOpenGL/QGLWidget>

@@ -12,7 +12,7 @@
 #ifndef hifi_ZoneRenderer_h
 #define hifi_ZoneRenderer_h
 
-#include "render/Engine.h"
+#include "../../render/src/render/Engine.h"
 
 #include "DeferredFrameTransform.h"
 

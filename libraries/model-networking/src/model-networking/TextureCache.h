@@ -12,7 +12,10 @@
 #ifndef hifi_TextureCache_h
 #define hifi_TextureCache_h
 
-#include <gpu/Texture.h>
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Texture.h"
+#include "../../../networking/src/ResourceCache.h"
+#include "../../../model/src/model/TextureMap.h"
 
 #include <QImage>
 #include <QMap>
@@ -20,8 +23,6 @@
 #include <QMetaEnum>
 
 #include <DependencyManager.h>
-#include <ResourceCache.h>
-#include <model/TextureMap.h>
 //CLIMAX_MERGE_START
 #include "../../../image/src/image/Image.h"
 #include "../../../ktx/src/ktx/KTX.h"

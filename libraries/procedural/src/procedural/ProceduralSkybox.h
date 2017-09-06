@@ -13,7 +13,9 @@
 #ifndef hifi_ProceduralSkybox_h
 #define hifi_ProceduralSkybox_h
 
-#include <model/Skybox.h>
+//CLIMAX_MERGE_START
+#include "../../../model/src/model/Skybox.h"
+//CLIMAX_MERGE_END
 
 #include "Procedural.h"
 

@@ -15,8 +15,9 @@
 
 #include <AABox.h>
 
-#include <gpu/Resource.h>
-#include <gpu/Stream.h>
+//CLIMAX_MERGE_START
+#include "../../../gpu/src/gpu/Resource.h"
+#include "../../../gpu/src/gpu/Stream.h"
 
 namespace model {
 typedef gpu::BufferView::Index Index;

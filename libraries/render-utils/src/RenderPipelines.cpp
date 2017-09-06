@@ -18,7 +18,7 @@
 #include "StencilMaskPass.h"
 #include "DeferredLightingEffect.h"
 #include "TextureCache.h"
-#include "render/DrawTask.h"
+#include "../../render/src/render/DrawTask.h"
 
 #include "model_vert.h"
 #include "model_shadow_vert.h"

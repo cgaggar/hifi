@@ -11,11 +11,13 @@
 #ifndef hifi_render_utils_BackgroundStage_h
 #define hifi_render_utils_BackgroundStage_h
 
-#include <model/Stage.h>
+//CLIMAX_MERGE_START
+#include "../../model/src/model/Stage.h"
+#include "../../render/src/render/Stage.h"
+#include "../../render/src/render/IndexedContainer.h"
+
 #include <set>
 #include <unordered_map>
-#include <render/IndexedContainer.h>
-#include <render/Stage.h>
 
 #include "LightingModel.h"
 

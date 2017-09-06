@@ -8,8 +8,8 @@
 #pragma once
 #ifndef hifi_ShaderCache_h
 #define hifi_ShaderCache_h
-
-#include <ResourceCache.h>
+//CLIMAX_MERGE_START
+#include "../../../networking/src/ResourceCache.h"
 
 class NetworkShader : public Resource {
 public:

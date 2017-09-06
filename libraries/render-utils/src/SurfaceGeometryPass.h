@@ -13,9 +13,9 @@
 #define hifi_SurfaceGeometryPass_h
 
 #include <DependencyManager.h>
-
-#include "render/DrawTask.h"
-#include "render/BlurTask.h"
+//CLIMAX_MERGE_START
+#include "../../render/src/render/DrawTask.h"
+#include "../../render/src/render/BlurTask.h"
 #include "DeferredFrameTransform.h"
 #include "DeferredFramebuffer.h"
 

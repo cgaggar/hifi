@@ -10,8 +10,8 @@
 //
 #include "DeferredFrameTransform.h"
 
-#include "gpu/Context.h"
-#include "render/Engine.h"
+#include "../../gpu/src/gpu/Context.h"
+#include "../../render/src/render/Engine.h"
 
 DeferredFrameTransform::DeferredFrameTransform() {
     FrameTransform frameTransform;
