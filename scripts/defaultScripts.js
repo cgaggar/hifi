@@ -11,6 +11,7 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 var DEFAULT_SCRIPTS = [];
+var DEFAULT_SCRIPTS_SEPARATE = [];
 
 function pushAll(dest, orig) {
     for (var k in orig) { 
@@ -29,22 +30,19 @@ if (!App.isAndroid()) {
         "system/snapshot.js",
         "system/help.js",
         "system/pal.js", // "system/mod.js", // older UX, if you prefer
-        "system/goto.js",
+        "system/makeUserConnection.js",
+        "system/tablet-goto.js",
         "system/marketplaces/marketplaces.js",
+        "system/commerce/wallet.js",
         "system/edit.js",
-        "system/tablet-users.js",
-        "system/selectAudioDevice.js",
         "system/notifications.js",
-        "system/controllers/controllerDisplayManager.js",
-        "system/controllers/handControllerGrab.js",
-        "system/controllers/handControllerPointer.js",
-        "system/controllers/squeezeHands.js",
-        "system/controllers/grab.js",
-        "system/controllers/teleport.js",
-        "system/controllers/toggleAdvancedMovementForHandControllers.js",
         "system/dialTone.js",
         "system/firstPersonHMD.js",
         "system/tablet-ui/tabletUI.js"
+    ]);
+    pushAll(DEFAULT_SCRIPTS_SEPARATE, [
+        "system/controllers/controllerScripts.js",
+        // "system/chat.js"
     ]);
 } else {
     print('defaultScripts.js - isAndroid check IT IS ANDROID');
@@ -60,13 +58,6 @@ if (!App.isAndroid()) {
         //"system/mod.js",
         //"system/selectAudioDevice.js",
         //"system/notifications.js",
-        "system/controllers/controllerDisplayManager.js",
-        "system/controllers/handControllerGrabAndroid.js",
-        "system/controllers/handControllerPointerAndroid.js",
-        "system/controllers/squeezeHands.js",
-        "system/controllers/grab.js",
-        "system/controllers/teleport.js",
-        "system/controllers/toggleAdvancedMovementForHandControllers.js",
         "system/dialTone.js",
         "system/firstPersonHMD.js",
         "system/snapshot.js",
@@ -75,6 +66,10 @@ if (!App.isAndroid()) {
         "system/godView.js",
         "system/friends.js",
         "developer/debugging/debugAndroidMouse.js"
+    ]);
+    pushAll(DEFAULT_SCRIPTS_SEPARATE, [
+        "system/controllers/controllerScripts.js",
+        // "system/chat.js"
     ]);
 }
 

@@ -37,7 +37,6 @@
 #include <PhysicalEntitySimulation.h>
 #include <PhysicsEngine.h>
 #include <plugins/Forward.h>
-#include <plugins/DisplayPlugin.h>
 #include <ui-plugins/PluginContainer.h>
 #include <ScriptEngine.h>
 #include <ShapeManager.h>
@@ -71,6 +70,9 @@
 #include "ui/OverlayConductor.h"
 #include "ui/overlays/Overlays.h"
 #include "UndoStackScriptingInterface.h"
+
+#include "raypick/RayPickManager.h"
+#include "raypick/LaserPointerManager.h"
 
 #include <procedural/ProceduralSkybox.h>
 #include <model/Skybox.h>
@@ -128,12 +130,6 @@ public:
     virtual bool isForeground() const override;
 
     virtual DisplayPluginPointer getActiveDisplayPlugin() const override;
-
-    enum Event {
-        Paint = QEvent::User + 1,
-        Idle,
-        Lambda
-    };
 
     // FIXME? Empty methods, do we still need them?
     static void initPlugins(const QStringList& arguments);
@@ -275,6 +271,7 @@ public:
     float getAverageSimsPerSecond() const { return _simCounter.rate(); }
 
     void takeSnapshot(bool notify, bool includeAnimated = false, float aspectRatio = 0.0f);
+    void takeSecondaryCameraSnapshot();
     void shareSnapshot(const QString& filename, const QUrl& href = QUrl(""));
 
     model::SkyboxPointer getDefaultSkybox() const { return _defaultSkybox; }
@@ -300,8 +297,12 @@ public:
     QUuid getTabletFrameID() const; // may be an entity or an overlay
 
     void setAvatarOverrideUrl(const QUrl& url, bool save);
+    void clearAvatarOverrideUrl() { _avatarOverrideUrl = QUrl(); _saveAvatarOverrideUrl = false; }
     QUrl getAvatarOverrideUrl() { return _avatarOverrideUrl; }
     bool getSaveAvatarOverrideUrl() { return _saveAvatarOverrideUrl; }
+
+    LaserPointerManager& getLaserPointerManager() { return _laserPointerManager; }
+    RayPickManager& getRayPickManager() { return _rayPickManager; }
 
 signals:
     void svoImportRequested(const QString& url);
@@ -334,14 +335,14 @@ public slots:
     // FIXME: Move addAssetToWorld* methods to own class?
     void addAssetToWorldFromURL(QString url);
     void addAssetToWorldFromURLRequestFinished();
-    void addAssetToWorld(QString filePath, QString zipFile, bool isZip);
+    void addAssetToWorld(QString filePath, QString zipFile, bool isZip, bool isBlocks);
     void addAssetToWorldUnzipFailure(QString filePath);
     void addAssetToWorldWithNewMapping(QString filePath, QString mapping, int copy);
     void addAssetToWorldUpload(QString filePath, QString mapping);
     void addAssetToWorldSetMapping(QString filePath, QString mapping, QString hash);
     void addAssetToWorldAddEntity(QString filePath, QString mapping);
 
-    void handleUnzip(QString sourceFile, QStringList destinationFile, bool autoAdd, bool isZip);
+    void handleUnzip(QString sourceFile, QStringList destinationFile, bool autoAdd, bool isZip, bool isBlocks);
 
     FileScriptingInterface* getFileDownloadInterface() { return _fileDownload; }
 
@@ -433,6 +434,8 @@ private slots:
     void displayAvatarAttachmentWarning(const QString& message) const;
     bool displayAvatarAttachmentConfirmationDialog(const QString& name) const;
 
+    bool askToReplaceDomainContent(const QString& url);
+
     void setSessionUUID(const QUuid& sessionUUID) const;
 
     void domainChanged(const QString& domainHostname);
@@ -455,10 +458,11 @@ private slots:
 private:
     static void initDisplay();
     void init();
-
+    bool handleKeyEventForFocusedEntityOrOverlay(QEvent* event);
+    bool handleFileOpenEvent(QFileOpenEvent* event);
     void cleanupBeforeQuit();
 
-    bool shouldPaint();
+    bool shouldPaint() const;
     void idle();
     void update(float deltaTime);
 
@@ -541,6 +545,7 @@ private:
     QTimer _minimizedWindowTimer;
     QElapsedTimer _timerStart;
     QElapsedTimer _lastTimeUpdated;
+    QElapsedTimer _lastTimeRendered;
 
     ShapeManager _shapeManager;
     PhysicalEntitySimulationPointer _entitySimulation;
@@ -633,7 +638,6 @@ private:
     ThreadSafeValueCache<OverlayID> _keyboardFocusedOverlay;
     quint64 _lastAcceptedKeyPress = 0;
     bool _isForeground = true; // starts out assumed to be in foreground
-    bool _inPaint = false;
     bool _isGLInitialized { false };
     bool _physicsEnabled { false };
 
@@ -699,6 +703,11 @@ private:
 
     QUrl _avatarOverrideUrl;
     bool _saveAvatarOverrideUrl { false };
+    QObject* _renderEventHandler{ nullptr };
 
+    RayPickManager _rayPickManager;
+    LaserPointerManager _laserPointerManager;
+
+    friend class RenderEventHandler;
 };
 #endif // hifi_Application_h

@@ -25,6 +25,7 @@
 #include "ui/overlays/Image3DOverlay.h"
 #include "ui/overlays/Overlays.h"
 #include "scripting/HMDScriptingInterface.h"
+#include "scripting/SelectionScriptingInterface.h"
 
 #include "EntityTree.h"
 #include "ContextOverlayLogging.h"
@@ -42,6 +43,7 @@ class ContextOverlayInterface : public QObject, public Dependency  {
     EntityPropertyFlags _entityPropertyFlags;
     QSharedPointer<HMDScriptingInterface> _hmdScriptingInterface;
     QSharedPointer<TabletScriptingInterface> _tabletScriptingInterface;
+    QSharedPointer<SelectionScriptingInterface> _selectionScriptingInterface;
     OverlayID _contextOverlayID { UNKNOWN_OVERLAY_ID };
     std::shared_ptr<Image3DOverlay> _contextOverlay { nullptr };
 public:
@@ -80,6 +82,9 @@ private:
     void enableEntityHighlight(const EntityItemID& entityItemID);
     void disableEntityHighlight(const EntityItemID& entityItemID);
 
+    void deletingEntity(const EntityItemID& entityItemID);
+
+    SelectionToSceneHandler _selectionToSceneHandler;
 };
 
 #endif // hifi_ContextOverlayInterface_h

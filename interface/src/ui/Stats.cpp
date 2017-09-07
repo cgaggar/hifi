@@ -41,7 +41,13 @@ using namespace std;
 
 static Stats* INSTANCE{ nullptr };
 
-//QString getTextureMemoryPressureModeString();
+#ifdef Q_OS_ANDROID
+QString getTextureMemoryPressureModeString() {
+    return "Unknown";
+}
+#else
+QString getTextureMemoryPressureModeString();
+#endif
 
 Stats* Stats::getInstance() {
     if (!INSTANCE) {
