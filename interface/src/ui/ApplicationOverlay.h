@@ -12,7 +12,8 @@
 #ifndef hifi_ApplicationOverlay_h
 #define hifi_ApplicationOverlay_h
 
-#include <gpu/Texture.h>
+//CLIMAX_MERGE_START
+#include "../../../libraries/gpu/src/gpu/Texture.h"
 
 
 // Handles the drawing of the overlays to the screen

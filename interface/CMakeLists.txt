@@ -219,18 +219,19 @@ endif ()
 
 # link required hifi libraries
 # temporal exclusion of libs for android
-#if (ANDROID)
- # message (STATUS "will NOT link gpu-gl")
- # link_hifi_libraries(
- #   networking shared octree gpu gl procedural model render
- #   recording fbx model-networking entities avatars
- #   audio audio-client animation script-engine physics
- #   render-utils entities-renderer ui auto-updater
- #   controllers plugins
- #   ui-plugins display-plugins input-plugins
- #   ${NON_ANDROID_LIBRARIES}
- # )
-#else ()
+if (ANDROID)
+ message (STATUS "will NOT link gpu-gl")
+ link_hifi_libraries(
+ avatars-renderer networking gpu gl shared octree procedural model render
+ recording fbx model-networking entities avatars
+ audio audio-client animation script-engine physics
+ render-utils entities-renderer ui auto-updater
+ controllers plugins
+ ui-plugins display-plugins input-plugins
+ ${NON_ANDROID_LIBRARIES}
+ ${ANDROID_LIBRARIES}
+ )
+else ()
 link_hifi_libraries(
   shared octree ktx gpu gl gpu-gl procedural model render
   recording fbx networking model-networking entities avatars trackers
@@ -241,7 +242,7 @@ link_hifi_libraries(
   ${NON_ANDROID_LIBRARIES}
     ${ANDROID_LIBRARIES}
   )
-#endif ()
+endif ()
 
 # include the binary directory of render-utils for shader includes
 target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_BINARY_DIR}/libraries/render-utils")

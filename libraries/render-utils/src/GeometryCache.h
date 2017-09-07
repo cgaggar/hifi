@@ -23,8 +23,9 @@
 
 #include <shared/Shapes.h>
 
-#include <gpu/Batch.h>
-#include <gpu/Stream.h>
+//CLIMAX_MERGE_START
+#include "../../gpu/src/gpu/Batch.h"
+#include "../../gpu/src/gpu/Stream.h"
 
 #include <render/ShapePipeline.h>
 
