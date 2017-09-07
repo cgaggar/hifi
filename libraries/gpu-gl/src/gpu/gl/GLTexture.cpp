@@ -372,6 +372,7 @@ WorkQueue& GLVariableAllocationSupport::getActiveWorkQueue() {
 }
 
 // FIXME hack for stats display
+/*
 QString getTextureMemoryPressureModeString() {
     switch (GLVariableAllocationSupport::_memoryPressureState) {
         case MemoryPressureState::Oversubscribed:
@@ -389,7 +390,7 @@ QString getTextureMemoryPressureModeString() {
     Q_UNREACHABLE();
     return "Unknown";
 }
-
+*/
 void GLVariableAllocationSupport::updateMemoryPressure() {
     static size_t lastAllowedMemoryAllocation = gpu::Texture::getAllowedGPUMemoryUsage();
 

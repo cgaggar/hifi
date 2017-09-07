@@ -56,7 +56,8 @@
 #include "FancyCamera.h"
 #include "ConnectionMonitor.h"
 #include "CursorManager.h"
-#include "gpu/Context.h"
+//CLIMAX_MERGE_START
+#include "../../libraries/gpu/src/gpu/Context.h"
 #include "Menu.h"
 #include "octree/OctreePacketProcessor.h"
 #include "render/Engine.h"

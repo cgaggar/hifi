@@ -24,7 +24,8 @@
 #include <AABox.h>
 #include <DependencyManager.h>
 #include <GeometryUtil.h>
-#include <gpu/Batch.h>
+//CLIMAX_MERGE_START
+#include "../../gpu/src/gpu/Batch.h"
 #include <render/Forward.h>
 #include <render/Scene.h>
 #include <Transform.h>

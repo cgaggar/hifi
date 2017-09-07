@@ -14,6 +14,11 @@
 #include <chrono>
 #include <thread>
 
+
+//CLIMAX_MERGE_START
+//#include "../../libraries/gl-android/src/gl/Config.h"
+//CLIMAX_MERGE_END
+
 #include <gl/Config.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
@@ -84,7 +89,9 @@
 #include <FramebufferCache.h>
 #include <gpu/Batch.h>
 #include <gpu/Context.h>
-#include <gpu/gl/GLBackend.h>
+//CLIMAX_MERGE_START
+#include "../../libraries/gpu-gl-android/src/gpu/gl/GLBackend.h"
+//CLIMAX_MERGE_END
 #include <HFActionEvent.h>
 #include <HFBackEvent.h>
 #include <InfoView.h>
