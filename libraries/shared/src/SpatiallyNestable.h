@@ -121,7 +121,7 @@ public:
     virtual glm::vec3 getScale(int jointIndex) const;
 
     // object's parent's frame
-    virtual const Transform getLocalTransform() const;
+    virtual Transform getLocalTransform() const;
     virtual void setLocalTransform(const Transform& transform);
 
     virtual glm::vec3 getLocalPosition() const;
@@ -158,8 +158,13 @@ public:
 
     SpatiallyNestablePointer getThisPointer() const;
 
-    void forEachChild(std::function<void(SpatiallyNestablePointer)> actor);
-    void forEachDescendant(std::function<void(SpatiallyNestablePointer)> actor);
+    using ChildLambda = std::function<void(const SpatiallyNestablePointer&)>;
+    using ChildLambdaTest = std::function<bool(const SpatiallyNestablePointer&)>;
+
+    void forEachChild(const ChildLambda& actor) const;
+    void forEachDescendant(const ChildLambda& actor) const;
+    void forEachChildTest(const ChildLambdaTest&  actor) const;
+    void forEachDescendantTest(const ChildLambdaTest& actor) const;
 
     void die() { _isDead = true; }
     bool isDead() const { return _isDead; }

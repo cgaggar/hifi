@@ -36,7 +36,7 @@ glm::quat MyHead::getHeadOrientation() const {
     // always the same.
 
     MyAvatar* myAvatar = static_cast<MyAvatar*>(_owningAvatar);
-    auto headPose = myAvatar->getHeadControllerPoseInWorldFrame();
+    auto headPose = myAvatar->getControllerPoseInWorldFrame(controller::Action::HEAD);
     if (headPose.isValid()) {
         return headPose.rotation * Quaternions::Y_180;
     }

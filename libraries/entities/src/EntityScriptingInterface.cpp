@@ -679,13 +679,18 @@ QVector<QUuid> EntityScriptingInterface::findEntitiesByType(const QString entity
 
 RayToEntityIntersectionResult EntityScriptingInterface::findRayIntersection(const PickRay& ray, bool precisionPicking, 
                 const QScriptValue& entityIdsToInclude, const QScriptValue& entityIdsToDiscard, bool visibleOnly, bool collidableOnly) {
-    PROFILE_RANGE(script_entities, __FUNCTION__);
-
     QVector<EntityItemID> entitiesToInclude = qVectorEntityItemIDFromScriptValue(entityIdsToInclude);
     qDebug() << "teleport entitiesToInclude size " << entitiesToInclude.size();
     QVector<EntityItemID> entitiesToDiscard = qVectorEntityItemIDFromScriptValue(entityIdsToDiscard);
-    qDebug() << "teleport entitiesToDiscard size " << entitiesToDiscard.size();
-    return findRayIntersectionWorker(ray, Octree::Lock, precisionPicking, entitiesToInclude, entitiesToDiscard, visibleOnly, collidableOnly);
+
+    return findRayIntersectionVector(ray, precisionPicking, entitiesToInclude, entitiesToDiscard, visibleOnly, collidableOnly);
+}
+
+RayToEntityIntersectionResult EntityScriptingInterface::findRayIntersectionVector(const PickRay& ray, bool precisionPicking,
+                const QVector<EntityItemID>& entityIdsToInclude, const QVector<EntityItemID>& entityIdsToDiscard, bool visibleOnly, bool collidableOnly) {
+    PROFILE_RANGE(script_entities, __FUNCTION__);
+
+    return findRayIntersectionWorker(ray, Octree::Lock, precisionPicking, entityIdsToInclude, entityIdsToDiscard, visibleOnly, collidableOnly);
 }
 
 // FIXME - we should remove this API and encourage all users to use findRayIntersection() instead. We've changed
@@ -1688,16 +1693,6 @@ float EntityScriptingInterface::getCostMultiplier() {
 
 void EntityScriptingInterface::setCostMultiplier(float value) {
     costMultiplier = value;
-}
-
-QObject* EntityScriptingInterface::getWebViewRoot(const QUuid& entityID) {
-    if (auto entity = checkForTreeEntityAndTypeMatch(entityID, EntityTypes::Web)) {
-        auto webEntity = std::dynamic_pointer_cast<WebEntityItem>(entity);
-        QObject* root = webEntity->getRootItem();
-        return root;
-    } else {
-        return nullptr;
-    }
 }
 
 // TODO move this someplace that makes more sense...

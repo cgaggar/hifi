@@ -405,9 +405,11 @@ var toolBar = (function () {
             }
         });
 
-        var createButtonIconRsrc = ((Entities.canRez() || Entities.canRezTmp()) ? CREATE_ENABLED_ICON : CREATE_DISABLED_ICON);
+        var hasRezPermissions = (Entities.canRez() || Entities.canRezTmp());
+        var createButtonIconRsrc = (hasRezPermissions ? CREATE_ENABLED_ICON : CREATE_DISABLED_ICON);
         tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
         activeButton = tablet.addButton({
+            captionColorOverride: hasRezPermissions ? "" : "#888888",
             icon: createButtonIconRsrc,
             activeIcon: "icons/tablet-icons/edit-a.svg",
             text: "CREATE",
@@ -789,6 +791,7 @@ function handleDomainChange() {
     var hasRezPermissions = (Entities.canRez() || Entities.canRezTmp());
     createButton.editProperties({
         icon: (hasRezPermissions ? CREATE_ENABLED_ICON : CREATE_DISABLED_ICON),
+        captionColorOverride: (hasRezPermissions ? "" : "#888888"),
     });
 }
 
@@ -1228,7 +1231,7 @@ Script.scriptEnding.connect(function () {
     Controller.mouseMoveEvent.disconnect(mouseMoveEventBuffered);
     Controller.mouseReleaseEvent.disconnect(mouseReleaseEvent);
 
-    Messages.messageReceived.disconnect(handleOverlaySelectionToolUpdates);
+    Messages.messageReceived.disconnect(handleMessagesReceived);
     Messages.unsubscribe("entityToolUpdates");
     Messages.unsubscribe("Toolbar-DomainChanged");
     createButton = null;

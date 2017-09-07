@@ -13,6 +13,7 @@
 #include "Application.h"
 
 #include <EntityTreeRenderer.h>
+#include <NetworkingConstants.h>
 
 static const float CONTEXT_OVERLAY_TABLET_OFFSET = 30.0f; // Degrees
 static const float CONTEXT_OVERLAY_TABLET_ORIENTATION = 210.0f; // Degrees
@@ -27,6 +28,9 @@ ContextOverlayInterface::ContextOverlayInterface() {
     _entityScriptingInterface = DependencyManager::get<EntityScriptingInterface>();
     _hmdScriptingInterface = DependencyManager::get<HMDScriptingInterface>();
     _tabletScriptingInterface = DependencyManager::get<TabletScriptingInterface>();
+    _selectionScriptingInterface = DependencyManager::get<SelectionScriptingInterface>();
+
+    _selectionToSceneHandler.initialize("contextOverlayHighlightList");
 
     _entityPropertyFlags += PROP_POSITION;
     _entityPropertyFlags += PROP_ROTATION;
@@ -55,6 +59,10 @@ ContextOverlayInterface::ContextOverlayInterface() {
             _contextOverlayJustClicked = false;
         }
     });
+    auto entityScriptingInterface = DependencyManager::get<EntityScriptingInterface>().data();
+    connect(entityScriptingInterface, &EntityScriptingInterface::deletingEntity, this, &ContextOverlayInterface::deletingEntity);
+
+    connect(_selectionScriptingInterface.data(), &SelectionScriptingInterface::selectedItemsListChanged, &_selectionToSceneHandler, &SelectionToSceneHandler::selectedItemsListChanged);
 }
 
 static const uint32_t LEFT_HAND_HW_ID = 1;
@@ -240,7 +248,7 @@ void ContextOverlayInterface::contextOverlays_hoverLeaveEntity(const EntityItemI
     }
 }
 
-static const QString MARKETPLACE_BASE_URL = "https://metaverse.highfidelity.com/marketplace/items/";
+static const QString MARKETPLACE_BASE_URL = NetworkingConstants::METAVERSE_SERVER_URL.toString() + "/marketplace/items/";
 
 void ContextOverlayInterface::openMarketplace() {
     // lets open the tablet and go to the current item in
@@ -250,22 +258,23 @@ void ContextOverlayInterface::openMarketplace() {
         auto tablet = dynamic_cast<TabletProxy*>(_tabletScriptingInterface->getTablet("com.highfidelity.interface.tablet.system"));
         // construct the url to the marketplace item
         QString url = MARKETPLACE_BASE_URL + _entityMarketplaceID;
-        tablet->gotoWebScreen(url);
+        QString MARKETPLACES_INJECT_SCRIPT_PATH = "file:///" + qApp->applicationDirPath() + "/scripts/system/html/js/marketplacesInject.js";
+        tablet->gotoWebScreen(url, MARKETPLACES_INJECT_SCRIPT_PATH);
         _hmdScriptingInterface->openTablet();
         _isInMarketplaceInspectionMode = true;
     }
 }
 
 void ContextOverlayInterface::enableEntityHighlight(const EntityItemID& entityItemID) {
-    if (!qApp->getEntities()->getTree()->findEntityByEntityItemID(entityItemID)->getShouldHighlight()) {
-        qCDebug(context_overlay) << "Setting 'shouldHighlight' to 'true' for Entity ID:" << entityItemID;
-        qApp->getEntities()->getTree()->findEntityByEntityItemID(entityItemID)->setShouldHighlight(true);
-    }
+    _selectionScriptingInterface->addToSelectedItemsList("contextOverlayHighlightList", "entity", entityItemID);
 }
 
 void ContextOverlayInterface::disableEntityHighlight(const EntityItemID& entityItemID) {
-    if (qApp->getEntities()->getTree()->findEntityByEntityItemID(entityItemID)->getShouldHighlight()) {
-        qCDebug(context_overlay) << "Setting 'shouldHighlight' to 'false' for Entity ID:" << entityItemID;
-        qApp->getEntities()->getTree()->findEntityByEntityItemID(entityItemID)->setShouldHighlight(false);
+    _selectionScriptingInterface->removeFromSelectedItemsList("contextOverlayHighlightList", "entity", entityItemID);
+}
+
+void ContextOverlayInterface::deletingEntity(const EntityItemID& entityID) {
+    if (_currentEntityWithContextOverlay == entityID) {
+        destroyContextOverlay(_currentEntityWithContextOverlay, PointerEvent());
     }
 }

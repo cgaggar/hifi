@@ -173,6 +173,7 @@ public slots:
 #ifdef ANDROID
     void audioInputStateChanged(QAudio::State state);
 #endif
+    void handleDummyAudioInput();
     void handleRecordedAudioInput(const QByteArray& audio);
     void reset();
     void audioMixerKilled();
@@ -280,6 +281,7 @@ private:
 
     Mutex _injectorsMutex;
     QAudioInput* _audioInput;
+    QTimer* _dummyAudioInput;
     QAudioFormat _desiredInputFormat;
     QAudioFormat _inputFormat;
     QIODevice* _inputDevice;
@@ -353,8 +355,8 @@ private:
 
     void handleLocalEchoAndReverb(QByteArray& inputByteArray);
 
-    bool switchInputToAudioDevice(const QAudioDeviceInfo& inputDeviceInfo);
-    bool switchOutputToAudioDevice(const QAudioDeviceInfo& outputDeviceInfo);
+    bool switchInputToAudioDevice(const QAudioDeviceInfo& inputDeviceInfo, bool isShutdownRequest = false);
+    bool switchOutputToAudioDevice(const QAudioDeviceInfo& outputDeviceInfo, bool isShutdownRequest = false);
 
     // Callback acceleration dependent calculations
     int calculateNumberOfInputCallbackBytes(const QAudioFormat& format) const;

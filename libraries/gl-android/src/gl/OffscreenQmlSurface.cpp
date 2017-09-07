@@ -6,7 +6,10 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 #include "OffscreenQmlSurface.h"
-#include "Config.h"
+#include "ImageProvider.h"
+
+// Has to come before Qt GL includes
+#include <gl/Config.h>
 
 #include <unordered_set>
 #include <unordered_map>
@@ -33,10 +36,15 @@
 #include <NetworkAccessManager.h>
 #include <GLMHelpers.h>
 
-#include "OffscreenGLCanvas.h"
-#include "GLHelpers.h"
-#include "GLLogging.h"
-#include "Context.h"
+#include <gl/OffscreenGLCanvas.h>
+#include <gl/GLHelpers.h>
+#include <gl/Context.h>
+
+#include "types/FileTypeProfile.h"
+#include "types/HFWebEngineProfile.h"
+#include "types/SoundEffect.h"
+
+#include "Logging.h"
 
 Q_LOGGING_CATEGORY(trace_render_qml, "trace.render.qml")
 Q_LOGGING_CATEGORY(trace_render_qml_gl, "trace.render.qml.gl")
@@ -171,7 +179,7 @@ private:
             GLuint texture = textureAndFence.first;
             uvec2 size = _textureSizes[texture];
             auto sizeKey = uvec2ToUint64(size);
-            // Textures can be returned after all surfaces of the given size have been destroyed, 
+            // Textures can be returned after all surfaces of the given size have been destroyed,
             // in which case we just destroy the texture
             if (!_textures.count(sizeKey)) {
                 destroy(textureAndFence);
@@ -251,8 +259,127 @@ QNetworkAccessManager* QmlNetworkAccessManagerFactory::create(QObject* parent) {
     return new QmlNetworkAccessManager(parent);
 }
 
-Q_DECLARE_LOGGING_CATEGORY(offscreenFocus)
-Q_LOGGING_CATEGORY(offscreenFocus, "hifi.offscreen.focus")
+QString getEventBridgeJavascript() {
+    // FIXME: Refactor with similar code in RenderableWebEntityItem
+    QString javaScriptToInject;
+    QFile webChannelFile(":qtwebchannel/qwebchannel.js");
+    QFile createGlobalEventBridgeFile(PathUtils::resourcesPath() + "/html/createGlobalEventBridge.js");
+    if (webChannelFile.open(QFile::ReadOnly | QFile::Text) &&
+        createGlobalEventBridgeFile.open(QFile::ReadOnly | QFile::Text)) {
+        QString webChannelStr = QTextStream(&webChannelFile).readAll();
+        QString createGlobalEventBridgeStr = QTextStream(&createGlobalEventBridgeFile).readAll();
+        javaScriptToInject = webChannelStr + createGlobalEventBridgeStr;
+    } else {
+        qCWarning(uiLogging) << "Unable to find qwebchannel.js or createGlobalEventBridge.js";
+    }
+    return javaScriptToInject;
+}
+
+class EventBridgeWrapper : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(QObject* eventBridge READ getEventBridge CONSTANT);
+
+public:
+    EventBridgeWrapper(QObject* eventBridge, QObject* parent = nullptr) : QObject(parent), _eventBridge(eventBridge) {
+    }
+
+    QObject* getEventBridge() {
+        return _eventBridge;
+    }
+
+private:
+    QObject* _eventBridge;
+};
+
+
+
+#define SINGLE_QML_ENGINE 0
+
+#if SINGLE_QML_ENGINE
+static QQmlEngine* globalEngine{ nullptr };
+static size_t globalEngineRefCount{ 0 };
+#endif
+
+void initializeQmlEngine(QQmlEngine* engine, QQuickWindow* window) {
+    // register the pixmap image provider (used only for security image, for now)
+    engine->addImageProvider(ImageProvider::PROVIDER_NAME, new ImageProvider());
+
+    engine->setNetworkAccessManagerFactory(new QmlNetworkAccessManagerFactory);
+    auto importList = engine->importPathList();
+    importList.insert(importList.begin(), PathUtils::resourcesPath());
+    engine->setImportPathList(importList);
+    for (const auto& path : importList) {
+        qDebug() << path;
+    }
+
+    if (!engine->incubationController()) {
+        engine->setIncubationController(window->incubationController());
+    }
+    auto rootContext = engine->rootContext();
+    rootContext->setContextProperty("GL", ::getGLContextData());
+    rootContext->setContextProperty("urlHandler", new UrlHandler());
+    rootContext->setContextProperty("resourceDirectoryUrl", QUrl::fromLocalFile(PathUtils::resourcesPath()));
+    rootContext->setContextProperty("pathToFonts", "../../");
+    rootContext->setContextProperty("ApplicationInterface", qApp);
+    auto javaScriptToInject = getEventBridgeJavascript();
+    if (!javaScriptToInject.isEmpty()) {
+        rootContext->setContextProperty("eventBridgeJavaScriptToInject", QVariant(javaScriptToInject));
+    }
+    rootContext->setContextProperty("FileTypeProfile", new FileTypeProfile(rootContext));
+    rootContext->setContextProperty("HFWebEngineProfile", new HFWebEngineProfile(rootContext));
+    rootContext->setContextProperty("Paths", DependencyManager::get<PathUtils>().data());
+}
+
+QQmlEngine* acquireEngine(QQuickWindow* window) {
+    Q_ASSERT(QThread::currentThread() == qApp->thread());
+
+    QQmlEngine* result = nullptr;
+    if (QThread::currentThread() != qApp->thread()) {
+        qCWarning(uiLogging) << "Cannot acquire QML engine on any thread but the main thread";
+    }
+    static std::once_flag once;
+    std::call_once(once, [] {
+        qmlRegisterType<SoundEffect>("Hifi", 1, 0, "SoundEffect");
+    });
+
+
+#if SINGLE_QML_ENGINE
+    if (!globalEngine) {
+        Q_ASSERT(0 == globalEngineRefCount);
+        globalEngine = new QQmlEngine();
+        initializeQmlEngine(result, window);
+        ++globalEngineRefCount;
+    }
+    result = globalEngine;
+#else
+    result = new QQmlEngine();
+    initializeQmlEngine(result, window);
+#endif
+
+    return result;
+}
+
+void releaseEngine(QQmlEngine* engine) {
+    Q_ASSERT(QThread::currentThread() == qApp->thread());
+#if SINGLE_QML_ENGINE
+    Q_ASSERT(0 != globalEngineRefCount);
+    if (0 == --globalEngineRefCount) {
+        globalEngine->deleteLater();
+        globalEngine = nullptr;
+    }
+#else
+    engine->deleteLater();
+#endif
+}
+
+#define OFFSCREEN_QML_SHARED_CONTEXT_PROPERTY "com.highfidelity.qml.gl.sharedContext"
+void OffscreenQmlSurface::setSharedContext(QOpenGLContext* sharedContext) {
+    qApp->setProperty(OFFSCREEN_QML_SHARED_CONTEXT_PROPERTY, QVariant::fromValue<void*>(sharedContext));
+}
+
+QOpenGLContext* OffscreenQmlSurface::getSharedContext() {
+    return static_cast<QOpenGLContext*>(qApp->property(OFFSCREEN_QML_SHARED_CONTEXT_PROPERTY).value<void*>());
+}
 
 void OffscreenQmlSurface::cleanup() {
     _canvas->makeCurrent();
@@ -275,6 +402,9 @@ void OffscreenQmlSurface::cleanup() {
 }
 
 void OffscreenQmlSurface::render() {
+    if (nsightActive()) {
+        return;
+    }
     if (_paused) {
         return;
     }
@@ -334,8 +464,8 @@ std::function<void(uint32_t, void*)> OffscreenQmlSurface::getDiscardLambda() {
 }
 
 bool OffscreenQmlSurface::allowNewFrame(uint8_t fps) {
-    // If we already have a pending texture, don't render another one 
-    // i.e. don't render faster than the consumer context, since it wastes 
+    // If we already have a pending texture, don't render another one
+    // i.e. don't render faster than the consumer context, since it wastes
     // GPU cycles on producing output that will never be seen
     if (0 != _latestTextureAndFence.first) {
         return false;
@@ -367,8 +497,8 @@ void OffscreenQmlSurface::onAboutToQuit() {
     QObject::disconnect(&_updateTimer);
 }
 
-void OffscreenQmlSurface::create(QOpenGLContext* shareContext) {
-    qCDebug(glLogging) << "Building QML surface";
+void OffscreenQmlSurface::create() {
+    qCDebug(uiLogging) << "Building QML surface";
 
     _renderControl = new QMyQuickRenderControl();
 
@@ -386,31 +516,17 @@ void OffscreenQmlSurface::create(QOpenGLContext* shareContext) {
     _renderControl->_renderWindow = _proxyWindow;
 
     _canvas = new OffscreenGLCanvas();
-    if (!_canvas->create(shareContext)) {
-        qWarning("Failed to create OffscreenGLCanvas");
-        //return;
+    if (!_canvas->create(getSharedContext())) {
+        qFatal("Failed to create OffscreenGLCanvas");
+        return;
     };
 
     connect(_quickWindow, &QQuickWindow::focusObjectChanged, this, &OffscreenQmlSurface::onFocusObjectChanged);
 
     // Create a QML engine.
-    _qmlEngine = new QQmlEngine;
+    auto qmlEngine = acquireEngine(_quickWindow);
 
-    _qmlEngine->setNetworkAccessManagerFactory(new QmlNetworkAccessManagerFactory);
-
-    auto importList = _qmlEngine->importPathList();
-    importList.insert(importList.begin(), PathUtils::resourcesPath());
-    _qmlEngine->setImportPathList(importList);
-    if (!_qmlEngine->incubationController()) {
-        _qmlEngine->setIncubationController(_quickWindow->incubationController());
-    }
-
-    // FIXME 
-    _glData = ::getGLContextData();  // Initialize JSON structure so that it can be filled in later and then used in QML.
-    _qmlEngine->rootContext()->setContextProperty("GL", _glData);
-    _qmlEngine->rootContext()->setContextProperty("offscreenWindow", QVariant::fromValue(getWindow()));
-    _qmlComponent = new QQmlComponent(_qmlEngine);
-
+    _qmlContext = new QQmlContext(qmlEngine->rootContext());
 
     connect(_renderControl, &QQuickRenderControl::renderRequested, this, [this] { _render = true; });
     connect(_renderControl, &QQuickRenderControl::sceneChanged, this, [this] { _render = _polish = true; });
@@ -1060,5 +1176,6 @@ void OffscreenQmlSurface::sendToQml(const QVariant& message) {
         QMetaObject::invokeMethod(_rootItem, "fromScript", Qt::QueuedConnection, Q_ARG(QVariant, message));
     }
 }
+
 
 #include "OffscreenQmlSurface.moc"
