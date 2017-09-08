@@ -40,10 +40,12 @@
 #include <gl/GLHelpers.h>
 #include <gl/Context.h>
 
+//CLIMAX_MERGE_START
+#ifndef ANDROID
 #include "types/FileTypeProfile.h"
 #include "types/HFWebEngineProfile.h"
+#endif
 #include "types/SoundEffect.h"
-
 #include "Logging.h"
 
 Q_LOGGING_CATEGORY(trace_render_qml, "trace.render.qml")
@@ -114,8 +116,14 @@ public:
         uint64_t now = usecTimestampNow();
         if ((now - _lastReport) > USECS_PER_SECOND * 5) {
             _lastReport = now;
+			
+#ifndef ANDROID
             qCDebug(glLogging) << "Current offscreen texture count " << _allTextureCount;
             qCDebug(glLogging) << "Current offscreen active texture count " << _activeTextureCount;
+#else
+			qCDebug(uiLogging) << "Current offscreen texture count " << _allTextureCount;
+            qCDebug(uiLogging) << "Current offscreen active texture count " << _activeTextureCount;
+#endif
         }
     }
 
@@ -325,8 +333,12 @@ void initializeQmlEngine(QQmlEngine* engine, QQuickWindow* window) {
     if (!javaScriptToInject.isEmpty()) {
         rootContext->setContextProperty("eventBridgeJavaScriptToInject", QVariant(javaScriptToInject));
     }
-    rootContext->setContextProperty("FileTypeProfile", new FileTypeProfile(rootContext));
-    rootContext->setContextProperty("HFWebEngineProfile", new HFWebEngineProfile(rootContext));
+	
+#ifndef ANDROID
+	rootContext->setContextProperty("FileTypeProfile", new FileTypeProfile(rootContext));
+	rootContext->setContextProperty("HFWebEngineProfile", new HFWebEngineProfile(rootContext));
+#endif
+	
     rootContext->setContextProperty("Paths", DependencyManager::get<PathUtils>().data());
 }
 
@@ -588,7 +600,13 @@ void OffscreenQmlSurface::resize(const QSize& newSize_, bool forceResize) {
         return;
     }
 
-    qCDebug(glLogging) << "Offscreen UI resizing to " << newSize.width() << "x" << newSize.height();
+    
+	
+#ifndef ANDROID
+	qCDebug(glLogging) << "Offscreen UI resizing to " << newSize.width() << "x" << newSize.height();
+#else
+	qCDebug(uiLogging) << "Offscreen UI resizing to " << newSize.width() << "x" << newSize.height();
+#endif
     gl::withSavedContext([&] {
         _canvas->makeCurrent();
 
@@ -633,28 +651,123 @@ QQuickItem* OffscreenQmlSurface::getRootItem() {
 void OffscreenQmlSurface::setBaseUrl(const QUrl& baseUrl) {
     _qmlEngine->setBaseUrl(baseUrl);
 }
-
-QObject* OffscreenQmlSurface::load(const QUrl& qmlSource, std::function<void(QQmlContext*, QObject*)> f) {
+//CLIMAX_MERGE_START
+void OffscreenQmlSurface::load(const QUrl& qmlSource, bool createNewContext, std::function<void(QQmlContext*, QObject*)> f) {
+    if (QThread::currentThread() != thread()) {
+        qCWarning(uiLogging) << "Called load on a non-surface thread";
+    }
     // Synchronous loading may take a while; restart the deadlock timer
     QMetaObject::invokeMethod(qApp, "updateHeartbeat", Qt::DirectConnection);
 
-    _qmlComponent->loadUrl(qmlSource, QQmlComponent::PreferSynchronous);
-
-    if (_qmlComponent->isLoading()) {
-        connect(_qmlComponent, &QQmlComponent::statusChanged, this,
-            [this, f](QQmlComponent::Status){
-                finishQmlLoad(f);
-            });
-        return nullptr;
+    QQmlContext* targetContext = _qmlContext;
+    if (_rootItem && createNewContext) {
+        targetContext = new QQmlContext(targetContext);
     }
 
-    return finishQmlLoad(f);
+    QUrl finalQmlSource = qmlSource;
+    if ((qmlSource.isRelative() && !qmlSource.isEmpty()) || qmlSource.scheme() == QLatin1String("file")) {
+        finalQmlSource = _qmlContext->resolvedUrl(qmlSource);
+    }
+
+    auto qmlComponent = new QQmlComponent(_qmlContext->engine(), finalQmlSource, QQmlComponent::PreferSynchronous);
+    if (qmlComponent->isLoading()) {
+        connect(qmlComponent, &QQmlComponent::statusChanged, this,
+            [this, qmlComponent, targetContext, f](QQmlComponent::Status) {
+            finishQmlLoad(qmlComponent, targetContext, f);
+        });
+        return;
+    }
+
+    finishQmlLoad(qmlComponent, targetContext, f);
 }
 
+void OffscreenQmlSurface::load(const QUrl& qmlSource, std::function<void(QQmlContext*, QObject*)> f) {
+    load(qmlSource, false, f);
+}
+
+void OffscreenQmlSurface::loadInNewContext(const QUrl& qmlSource, std::function<void(QQmlContext*, QObject*)> f) {
+    load(qmlSource, true, f);
+}
+
+//CLIMAX_MERGE_END
 void OffscreenQmlSurface::clearCache() {
     getRootContext()->engine()->clearComponentCache();
 }
 
+
+//CLIMAX_MERGE_START
+//the new funciton from the master branch
+void OffscreenQmlSurface::finishQmlLoad(QQmlComponent* qmlComponent, QQmlContext* qmlContext, std::function<void(QQmlContext*, QObject*)> f) {
+    disconnect(qmlComponent, &QQmlComponent::statusChanged, this, 0);
+    if (qmlComponent->isError()) {
+        for (const auto& error : qmlComponent->errors()) {
+            qCWarning(uiLogging) << error.url() << error.line() << error;
+        }
+        qmlComponent->deleteLater();
+        return;
+    }
+
+
+    QObject* newObject = qmlComponent->beginCreate(qmlContext);
+    if (qmlComponent->isError()) {
+        for (const auto& error : qmlComponent->errors()) {
+            qCWarning(uiLogging) << error.url() << error.line() << error;
+        }
+        if (!_rootItem) {
+            qFatal("Unable to finish loading QML root");
+        }
+        qmlComponent->deleteLater();
+        return;
+    }
+
+    qmlContext->engine()->setObjectOwnership(this, QQmlEngine::CppOwnership);
+    f(qmlContext, newObject);
+
+    QObject* eventBridge = qmlContext->contextProperty("eventBridge").value<QObject*>();
+    if (qmlContext != _qmlContext && eventBridge && eventBridge != this) {
+        // FIXME Compatibility mechanism for existing HTML and JS that uses eventBridgeWrapper
+        // Find a way to flag older scripts using this mechanism and wanr that this is deprecated
+        qmlContext->setContextProperty("eventBridgeWrapper", new EventBridgeWrapper(eventBridge, qmlContext));
+    }
+
+    qmlComponent->completeCreate();
+    qmlComponent->deleteLater();
+
+
+    // All quick items should be focusable
+    QQuickItem* newItem = qobject_cast<QQuickItem*>(newObject);
+    if (newItem) {
+        // Make sure we make items focusable (critical for
+        // supporting keyboard shortcuts)
+        newItem->setFlag(QQuickItem::ItemIsFocusScope, true);
+    }
+
+    // If we already have a root, just set a couple of flags and the ancestry
+    if (newItem && _rootItem) {
+        // Allow child windows to be destroyed from JS
+        QQmlEngine::setObjectOwnership(newObject, QQmlEngine::JavaScriptOwnership);
+        newObject->setParent(_rootItem);
+        if (newItem) {
+            newItem->setParentItem(_rootItem);
+        }
+        return;
+    }
+
+    if (!newItem) {
+        qFatal("Could not load object as root item");
+        return;
+    }
+
+    connect(newItem, SIGNAL(sendToScript(QVariant)), this, SIGNAL(fromQml(QVariant)));
+
+    // The root item is ready. Associate it with the window.
+    _rootItem = newItem;
+    _rootItem->setParentItem(_quickWindow->contentItem());
+    _rootItem->setSize(_quickWindow->renderTargetSize());
+}
+
+//the old function.
+#if 0
 QObject* OffscreenQmlSurface::finishQmlLoad(std::function<void(QQmlContext*, QObject*)> f) {
     disconnect(_qmlComponent, &QQmlComponent::statusChanged, this, 0);
     if (_qmlComponent->isError()) {
@@ -675,7 +788,11 @@ QObject* OffscreenQmlSurface::finishQmlLoad(std::function<void(QQmlContext*, QOb
         QString createGlobalEventBridgeStr = QTextStream(&createGlobalEventBridgeFile).readAll();
         javaScriptToInject = webChannelStr + createGlobalEventBridgeStr;
     } else {
-        qCWarning(glLogging) << "Unable to find qwebchannel.js or createGlobalEventBridge.js";
+#ifndef ANDROID
+		qCWarning(glLogging) << "Unable to find qwebchannel.js or createGlobalEventBridge.js";
+#else
+		qCWarning(uiLogging) << "Unable to find qwebchannel.js or createGlobalEventBridge.js";
+#endif
     }
 
     QQmlContext* newContext = new QQmlContext(_qmlEngine, qApp);
@@ -683,7 +800,11 @@ QObject* OffscreenQmlSurface::finishQmlLoad(std::function<void(QQmlContext*, QOb
     if (_qmlComponent->isError()) {
         QList<QQmlError> errorList = _qmlComponent->errors();
         foreach(const QQmlError& error, errorList)
-            qCWarning(glLogging) << error.url() << error.line() << error;
+#ifndef ANDROID
+			qCWarning(glLogging) << error.url() << error.line() << error;
+#else
+			qCWarning(uiLogging) << error.url() << error.line() << error;
+#endif
         if (!_rootItem) {
             qFatal("Unable to finish loading QML root");
         }
@@ -729,7 +850,8 @@ QObject* OffscreenQmlSurface::finishQmlLoad(std::function<void(QQmlContext*, QOb
     _rootItem->setSize(_quickWindow->renderTargetSize());
     return _rootItem;
 }
-
+#endif
+//CLIMAX_MERGE_END
 void OffscreenQmlSurface::updateQuick() {
     offscreenTextures.report();
     // If we're

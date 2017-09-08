@@ -178,17 +178,19 @@ void LoginDialog::openUrl(const QString& url) const {
     auto hmd = DependencyManager::get<HMDScriptingInterface>();
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
 
-    if (tablet->getToolbarMode()) {
-        auto browser = offscreenUi->load("Browser.qml");
-        browser->setProperty("url", url);
+   	if (tablet->getToolbarMode()) {
+        offscreenUi->load("Browser.qml", [=](QQmlContext* context, QObject* newObject) {
+            newObject->setProperty("url", url);
+        });
     } else {
         if (!hmd->getShouldShowTablet() && !qApp->isHMDMode()) {
-            auto browser = offscreenUi->load("Browser.qml");
-            browser->setProperty("url", url);
+            offscreenUi->load("Browser.qml", [=](QQmlContext* context, QObject* newObject) {
+                newObject->setProperty("url", url);
+            });
         } else {
             tablet->gotoWebScreen(url);
         }
-    }
+	}
 }
 
 void LoginDialog::linkCompleted(QNetworkReply& reply) {

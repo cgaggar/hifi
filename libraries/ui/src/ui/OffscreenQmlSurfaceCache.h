@@ -12,6 +12,7 @@
 #include "DependencyManager.h"
 
 #include <QtCore/QSharedPointer>
+#include "OffscreenQmlSurface.h"
 
 class OffscreenQmlSurface;
 

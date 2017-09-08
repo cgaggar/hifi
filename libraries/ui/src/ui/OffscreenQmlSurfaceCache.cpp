@@ -11,7 +11,6 @@
 #include <QtQml/QQmlContext>
 
 #include <PathUtils.h>
-#include "OffscreenQmlSurface.h"
 
 OffscreenQmlSurfaceCache::OffscreenQmlSurfaceCache() {
 }
@@ -47,7 +46,6 @@ QSharedPointer<OffscreenQmlSurface> OffscreenQmlSurfaceCache::buildSurface(const
     surface->create();
     surface->setBaseUrl(QUrl::fromLocalFile(PathUtils::resourcesPath() + "/qml/"));
     surface->load(rootSource);
-    surface->getRootContext()->setContextProperty("ApplicationInterface", qApp);
     surface->resize(QSize(100, 100));
     return surface;
 }

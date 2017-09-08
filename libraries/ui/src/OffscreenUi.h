@@ -22,8 +22,8 @@
 #include <QtWidgets/QInputDialog>
 
 #include <DependencyManager.h>
-
-#include "gl/OffscreenQmlSurface.h"
+//CLIMAX_MERGE_START
+#include "ui/OffscreenQmlSurface.h"
 #include "OffscreenQmlElement.h"
 
 class VrMenu;

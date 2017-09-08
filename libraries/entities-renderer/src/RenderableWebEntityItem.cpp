@@ -126,7 +126,7 @@ void WebEntityRenderer::doRenderUpdateSynchronousTyped(const ScenePointer& scene
     if (_contextPosition != entity->getPosition()) {
         // update globalPosition
         _contextPosition = entity->getPosition();
-        _webSurface->getSurfaceContext()->setContextProperty("globalPosition", vec3toVariant(_contextPosition));
+        _webSurface->getRootContext()->setContextProperty("globalPosition", vec3toVariant(_contextPosition));
     }
 
     if (_lastSourceUrl != entity->getSourceUrl()) {
@@ -225,7 +225,7 @@ bool WebEntityRenderer::buildWebSurface(const TypedEntityPointer& entity) {
     // and the current rendering load)
     _webSurface->setMaxFps(DEFAULT_MAX_FPS);
     // FIXME - Keyboard HMD only: Possibly add "HMDinfo" object to context for WebView.qml.
-    _webSurface->getSurfaceContext()->setContextProperty("desktop", QVariant());
+    _webSurface->getRootContext()->setContextProperty("desktop", QVariant());
     _fadeStartTime = usecTimestampNow();
     loadSourceURL();
     _webSurface->resume();
@@ -297,20 +297,6 @@ void WebEntityRenderer::destroyWebSurface() {
             }
         }
 
-<<<<<<< HEAD
-        _webSurface->load("WebEntityView.qml");
-        _webSurface->getRootItem()->setProperty("url", _sourceUrl);
-        _webSurface->getRootContext()->setContextProperty("desktop", QVariant());
-
-    } else {
-        _contentType = qmlContent;
-        _webSurface->setBaseUrl(QUrl::fromLocalFile(PathUtils::resourcesPath()));
-        _webSurface->load(_sourceUrl, [&](QQmlContext* context, QObject* obj) {});
-
-        if (_webSurface->getRootItem() && _webSurface->getRootItem()->objectName() == "tabletRoot") {
-            auto tabletScriptingInterface = DependencyManager::get<TabletScriptingInterface>();
-            tabletScriptingInterface->setQmlTabletRoot("com.highfidelity.interface.tablet.system", _webSurface.data());
-=======
         webSurface->pause();
         auto renderer = DependencyManager::get<EntityTreeRenderer>();
         if (renderer) {
@@ -318,14 +304,9 @@ void WebEntityRenderer::destroyWebSurface() {
             QObject::disconnect(renderer.data(), &EntityTreeRenderer::mouseReleaseOnEntity, this, nullptr);
             QObject::disconnect(renderer.data(), &EntityTreeRenderer::mouseMoveOnEntity, this, nullptr);
             QObject::disconnect(renderer.data(), &EntityTreeRenderer::hoverLeaveEntity, this, nullptr);
->>>>>>> upstream/master
         }
         webSurface.reset();
     }
-<<<<<<< HEAD
-    _webSurface->getRootContext()->setContextProperty("globalPosition", vec3toVariant(getPosition()));
-=======
->>>>>>> upstream/master
 }
 
 glm::vec2 WebEntityRenderer::getWindowSize(const TypedEntityPointer& entity) const {
@@ -436,22 +417,9 @@ void WebEntityRenderer::setProxyWindow(QWindow* proxyWindow) {
     }
 }
 
-<<<<<<< HEAD
-void RenderableWebEntityItem::update(const quint64& now) {
-
-    if (_webSurface) {
-        // update globalPosition
-        _webSurface->getRootContext()->setContextProperty("globalPosition", vec3toVariant(getPosition()));
-    }
-
-    auto interval = now - _lastRenderTime;
-    if (interval > MAX_NO_RENDER_INTERVAL) {
-        destroyWebSurface();
-=======
 QObject* WebEntityRenderer::getEventHandler() {
     if (!_webSurface) {
         return nullptr;
->>>>>>> upstream/master
     }
     return _webSurface->getEventHandler();
 }

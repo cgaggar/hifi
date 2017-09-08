@@ -49,11 +49,15 @@ public:
     virtual void create();
     void resize(const QSize& size, bool forceResize = false);
     QSize size() const;
-
-    Q_INVOKABLE QObject* load(const QUrl& qmlSource, std::function<void(QQmlContext*, QObject*)> f = [](QQmlContext*, QObject*) {});
-    Q_INVOKABLE QObject* load(const QString& qmlSourceFile, std::function<void(QQmlContext*, QObject*)> f = [](QQmlContext*, QObject*) {}) {
+//CLIMAX_MERGE_START
+	Q_INVOKABLE void load(const QUrl& qmlSource, bool createNewContext, std::function<void(QQmlContext*, QObject*)> f = [](QQmlContext*, QObject*) {});
+    Q_INVOKABLE void loadInNewContext(const QUrl& qmlSource, std::function<void(QQmlContext*, QObject*)> f = [](QQmlContext*, QObject*) {});
+    Q_INVOKABLE void load(const QUrl& qmlSource, std::function<void(QQmlContext*, QObject*)> f = [](QQmlContext*, QObject*) {});
+    Q_INVOKABLE void load(const QString& qmlSourceFile, std::function<void(QQmlContext*, QObject*)> f = [](QQmlContext*, QObject*) {}) {
         return load(QUrl(qmlSourceFile), f);
-    }
+	}
+//CLIMAX_MERGE_END
+   
     void clearCache();
 
     Q_INVOKABLE void executeOnUiThread(std::function<void()> function, bool blocking = false);
@@ -122,8 +126,8 @@ protected:
 private:
     static QOpenGLContext* getSharedContext();
 
-    QObject* finishQmlLoad(QQmlComponent* qmlComponent, QQmlContext* qmlContext, std::function<void(QQmlContext*, QObject*)> f);
-    QPointF mapWindowToUi(const QPointF& sourcePosition, QObject* sourceObject);
+    void finishQmlLoad(QQmlComponent* qmlComponent, QQmlContext* qmlContext, std::function<void(QQmlContext*, QObject*)> f);
+	QPointF mapWindowToUi(const QPointF& sourcePosition, QObject* sourceObject);
     void setupFbo();
     bool allowNewFrame(uint8_t fps);
     void render();
@@ -141,6 +145,7 @@ private:
     QQmlComponent* _qmlComponent { nullptr };
     QQuickItem* _rootItem { nullptr };
     OffscreenGLCanvas* _canvas { nullptr };
+	QQmlContext* _qmlContext { nullptr };
     QJsonObject _glData;
 
     QTimer _updateTimer;

@@ -474,7 +474,8 @@ QString Wallet::signWithKey(const QByteArray& text, const QString& key) {
 void Wallet::updateImageProvider() {
     // inform the image provider.  Note it doesn't matter which one you inform, as the
     // images are statics
-    auto engine = DependencyManager::get<OffscreenUi>()->getSurfaceContext()->engine();
+	//CLIMAX_MERGE_START
+    auto engine = DependencyManager::get<OffscreenUi>()->getRootContext()->engine();
     auto imageProvider = reinterpret_cast<ImageProvider*>(engine->imageProvider(ImageProvider::PROVIDER_NAME));
     imageProvider->setSecurityImage(_securityImage);
 }

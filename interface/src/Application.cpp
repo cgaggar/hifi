@@ -115,7 +115,9 @@
 #include <OctreeSceneStats.h>
 #include <OffscreenUi.h>
 #include <gl/OffscreenGLCanvas.h>
-#include <gl/OffscreenQmlSurfaceCache.h>
+//CLIMAX_MERGE_START
+#include <ui/OffscreenQmlSurfaceCache.h>
+//CLIMAX_MERGE_END
 #include <ui/QmlWrapper.h>
 #include <PathUtils.h>
 #include <PerfStat.h>
@@ -155,17 +157,11 @@
 #include <QmlWebWindowClass.h>
 #include <Preferences.h>
 #include <display-plugins/CompositorHelper.h>
-<<<<<<< HEAD
 //CLIMAX_MERGE_START
 #include "../../libraries/trackers/src/trackers/EyeTracker.h"
 #include "../../libraries/avatars-renderer/src/avatars-renderer/ScriptAvatar.h"
 //CLIMAX_MERGE_END
-=======
-#include <trackers/EyeTracker.h>
-#include <avatars-renderer/ScriptAvatar.h>
 #include <RenderableEntityItem.h>
-
->>>>>>> upstream/master
 #include "AudioClient.h"
 #include "audio/AudioScope.h"
 #include "avatar/AvatarManager.h"
@@ -2279,7 +2275,9 @@ void Application::initializeUi() {
     Tooltip::registerType();
     UpdateDialog::registerType();
     QmlCommerce::registerType();
-    qmlRegisterType<ResourceImageItem>("Hifi", 1, 0, "ResourceImageItem");
+	//CLIMAX_MERGE_START
+	//The source file was not present in the brach and thus the merged file was deleted as its not being used anywhere. commenting this out till get more info.
+    //qmlRegisterType<ResourceImageItem>("Hifi", 1, 0, "ResourceImageItem");
     qmlRegisterType<Preference>("Hifi", 1, 0, "Preference");
 
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
@@ -2455,22 +2453,6 @@ void Application::paintGL() {
     }
 
     {
-<<<<<<< HEAD
-        PROFILE_RANGE(render, "/offscreenMakeCurrent");
-    // FIXME not needed anymore?
-    _offscreenContext->makeCurrent();
-    }
-
-    {
-        PROFILE_RANGE(render, "/pluginBeginFrameRender");
-    // If a display plugin loses it's underlying support, it
-    // needs to be able to signal us to not use it
-    if (!displayPlugin->beginFrameRender(_frameCount)) {
-        _inPaint = false;
-        updateDisplayMode();
-        return;
-    }
-=======
         PROFILE_RANGE(render, "/pluginBeginFrameRender");
         // If a display plugin loses it's underlying support, it
         // needs to be able to signal us to not use it
@@ -2478,7 +2460,6 @@ void Application::paintGL() {
             updateDisplayMode();
             return;
         }
->>>>>>> upstream/master
     }
 
     // update the avatar with a fresh HMD pose
@@ -2543,14 +2524,8 @@ void Application::paintGL() {
         auto myAvatar = getMyAvatar();
             boomOffset = myAvatar->getScale() * myAvatar->getBoomLength() * -IDENTITY_FORWARD;
 
-<<<<<<< HEAD
-
-        // The render mode is default or mirror if the camera is in mirror mode, assigned further below
-        renderArgs._renderMode = RenderArgs::DEFAULT_RENDER_MODE;
-=======
-            // The render mode is default or mirror if the camera is in mirror mode, assigned further below
-            renderArgs._renderMode = RenderArgs::DEFAULT_RENDER_MODE;
->>>>>>> upstream/master
+		// The render mode is default or mirror if the camera is in mirror mode, assigned further below
+		renderArgs._renderMode = RenderArgs::DEFAULT_RENDER_MODE;
 
         // Always use the default eye position, not the actual head eye position.
         // Using the latter will cause the camera to wobble with idle animations,
@@ -2996,38 +2971,9 @@ void Application::onPresent(quint32 frameCount) {
     }
 }
 
-<<<<<<< HEAD
-    int type = event->type();
-    switch (type) {
-        case Event::Lambda:
-            static_cast<LambdaEvent*>(event)->call();
-            return true;
-
-        // Explicit idle keeps the idle running at a lower interval, but without any rendering
-        // see (windowMinimizedChanged)
-        case Event::Idle:
-            idle();
-            // Clear the event queue of pending idle calls
-            removePostedEvents(this, Idle);
-            return true;
-
-        case Event::Paint:
-        // NOTE: This must be updated as close to painting as possible,
-        //       or AvatarInputs will mysteriously move to the bottom-right
-        AvatarInputs::getInstance()->update();
-        paintGL();
-            // Clear the event queue of pending paint calls
-            removePostedEvents(this, Paint);
-        return true;
-
-        default:
-            break;
-    }
-=======
 static inline bool isKeyEvent(QEvent::Type type) {
     return type == QEvent::KeyPress || type == QEvent::KeyRelease;
 }
->>>>>>> upstream/master
 
 bool Application::handleKeyEventForFocusedEntityOrOverlay(QEvent* event) {
     if (!_keyboardFocusedEntity.get().isInvalidID()) {
@@ -4527,10 +4473,6 @@ void Application::init() {
     _timerStart.start();
     _lastTimeUpdated.start();
 
-<<<<<<< HEAD
-#ifndef ANDROID
-=======
->>>>>>> upstream/master
     if (auto steamClient = PluginManager::getInstance()->getSteamClientPlugin()) {
         // when +connect_lobby in command line, join steam lobby
         const QString STEAM_LOBBY_COMMAND_LINE_KEY = "+connect_lobby";
@@ -4540,7 +4482,6 @@ void Application::init() {
             steamClient->joinLobby(lobbyId);
         }
     }
-#endif
 
     qCDebug(interfaceapp) << "Loaded settings";
 
@@ -4579,18 +4520,7 @@ void Application::init() {
 
     // Make sure any new sounds are loaded as soon as know about them.
     connect(tree.get(), &EntityTree::newCollisionSoundURL, this, [this](QUrl newURL, EntityItemID id) {
-<<<<<<< HEAD
-        EntityTreePointer tree = getEntities()->getTree();
-        if (auto entity = tree->findEntityByEntityItemID(id)) {
-            auto sound = DependencyManager::get<SoundCache>()->getSound(newURL);
-            auto renderable = entity->getRenderableInterface();
-            if (renderable) {
-                renderable->setCollisionSound(sound);
-        }
-        }
-=======
         getEntities()->setCollisionSound(id, DependencyManager::get<SoundCache>()->getSound(newURL));
->>>>>>> upstream/master
     }, Qt::QueuedConnection);
     connect(getMyAvatar().get(), &MyAvatar::newCollisionSoundURL, this, [this](QUrl newURL) {
         if (auto avatar = getMyAvatar()) {

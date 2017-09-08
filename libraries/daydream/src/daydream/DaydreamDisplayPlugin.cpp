@@ -77,7 +77,10 @@ void DaydreamDisplayPlugin::compositeLayers() {
 
     {
         PROFILE_RANGE_EX(render, "compositeExtra", 0xff0077ff, (uint64_t)presentCount())
-        compositeExtra(extraBatch);
+		//CLIMAX_MERGE_START	
+		//This def isnt declared anywhere..	
+        //compositeExtra(extraBatch);
+		compositeExtra();
     }
     {
         PROFILE_RANGE_EX(render, "composite2ExecuteBatch", 0xff0077ff, (uint64_t)presentCount())
@@ -204,16 +207,19 @@ bool DaydreamDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
     handPoses[1] = glm::translate(glm::mat4(), correctedRightPose.translation) * glm::mat4_cast(correctedRightPose.rotation * HAND_TO_LASER_ROTATION);
 
     withNonPresentThreadLock([&] {
-        _uiModelTransform = DependencyManager::get<CompositorHelper>()->getModelTransform();
+		//CLIMAX_MERGE_START
+		//not declared or used anywhere.
+        //_uiModelTransform = DependencyManager::get<CompositorHelper>()->getModelTransform();
         _frameInfos[frameIndex] = _currentRenderFrameInfo;
         
-        _handPoses[0] = handPoses[0];//glm::translate(mat4(), vec3(0.1f, 0.3f, 0.0f));
+        //_handPoses[0] = handPoses[0];
+		//glm::translate(mat4(), vec3(0.1f, 0.3f, 0.0f));
 /*      _handLasers[0].color = vec4(0, 0, 0, 0);
         _handLasers[0].mode = HandLaserMode::Overlay;
         _handLasers[0].direction = vec3(0,0,0);
 */
 
-        _handPoses[1] = handPoses[1];
+        //_handPoses[1] = handPoses[1];
 /*        _handLasers[1].color = vec4(0, 0, 0, 0);
         _handLasers[1].mode = HandLaserMode::None;
         _handLasers[1].direction = vec3(0,0,0);

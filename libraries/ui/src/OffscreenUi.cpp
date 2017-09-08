@@ -93,7 +93,8 @@ QObject* OffscreenUi::getFlags() {
 
 void OffscreenUi::create() {
     OffscreenQmlSurface::create();
-    auto myContext = getSurfaceContext();
+	//CLIMAX_MERGE_START
+    auto myContext = getRootContext();
 
     myContext->setContextProperty("OffscreenUi", this);
     myContext->setContextProperty("offscreenFlags", offscreenFlags = new OffscreenFlags());
@@ -553,11 +554,7 @@ void OffscreenUi::createDesktop(const QUrl& url) {
 #else 
     getRootContext()->setContextProperty("DebugQML", QVariant(false));
 #endif
-#ifdef ANDROID
-    _desktop = static_cast<QQuickItem*>(load(url));
-#else 
-    _desktop = dynamic_cast<QQuickItem*>(load(url));
-#endif
+
     Q_ASSERT(_desktop);
     getRootContext()->setContextProperty("desktop", _desktop);
 
